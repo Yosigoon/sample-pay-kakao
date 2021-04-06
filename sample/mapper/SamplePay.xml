@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dalbit.pay.dao.SamplePayDao" >
+
+    <insert id="payInfoInsert" parameterType="PayInfoVo">
+        /* Pay.xml payInfoInsert */
+        INSERT INTO tb_payment_succ (
+          order_id
+          , mem_no
+          , pay_way
+          , pay_dt_comein
+          , pay_amt
+          , item_amt
+          , pay_code
+          , pay_info
+          , pay_ip
+          , login_media
+          , app_ver
+          , service_id
+          , os
+          , item_code
+          , rcpt_nm
+          , account_no
+          , bill_id
+          , phone_no
+          , receipt_code
+          , receipt_phone
+          , receipt_social
+          , receipt_biz
+          , dal_cnt
+          , payletter_token
+          , packet_state
+        ) VALUES (
+          #{orderId}
+          , #{memNo}
+          , #{payWay}
+          , #{payDtComein}
+          , #{payAmt}
+          , #{itemAmt}
+          , TRIM(SUBSTRING_INDEX(#{payCode}, 'x', 1))
+          , #{payInfo}
+          , #{payIp}
+          , #{loginMedia}
+          , #{appVer}
+          , #{serviceId}
+          , #{os}
+          , #{itemCode}
+          , #{rcptNm}
+          , #{accountNo}
+          , #{billId}
+          , #{phoneNo}
+          , #{receiptCode}
+          , #{receiptPhone}
+          , #{receiptSocial}
+          , #{receiptBiz}
+          , #{dalCnt}
+          , #{payletterToken}
+          , #{packetState}
+        )
+    </insert>
+
+    <update id="failUpdate" parameterType="string">
+        /* Pay.xml failUpdate */
+        UPDATE tb_payment_succ
+        SET pay_yn = 'f'
+        WHERE order_id = #{tradeid}
+          AND pay_yn <![CDATA[<>]]> 'y'
+    </update>
+
+    <select id="getTidInfo" parameterType="com.dalbit.pay.vo.procedure.KakaoPayApproveVo" resultType="com.dalbit.pay.vo.procedure.KakaoPayApproveVo">
+        /* Pay.xml getTidInfo*/
+        SELECT
+            bill_id as tid
+            , dal_cnt as dalCnt
+            , item_amt as itemAmt
+            , os
+        FROM tb_payment_succ
+        WHERE order_id = #{partner_order_id}
+    </select>
+
+    <update id="kakaoPayUpdateVo" parameterType="com.dalbit.pay.vo.procedure.KakaoPayUpdateVo">
+        /* Pay.xml kakaoPayUpdateVo */
+        UPDATE tb_payment_succ
+        SET pay_yn = 'Y'
+          , pay_ok_date = #{payOkDate}
+          , pay_ok_time = #{payOkTime}
+          , auto_bill_key = #{autoBillKey}
+          , first_pay_yn = #{firstPayYn}
+          , aid = #{aid}
+        WHERE order_id = #{orderId}
+          AND pay_yn = 'n'
+    </update>
+
+    <select id="getCurrentTotalDal" parameterType="String" resultType="int">
+        /* Pay.xml getCurrentTotalDal */
+        SELECT
+            IFNULL(SUM(money + ruby), 0) as totalDal
+        FROM tb_member_wallet
+        WHERE mem_no = #{memNo}
+    </select>
+
+    <select id="selectFirstPayInfo" parameterType="string" resultType="int">
+        /* Pay.xml selectFirstPayInfo */
+        SELECT
+            count(*)
+        FROM (
+                 SELECT
+                         *
+                 FROM tb_payment_succ
+                 WHERE mem_no = #{memNo}
+                   AND pay_yn = 'y'
+                 ORDER BY pay_ok_date DESC
+                 LIMIT 1
+             ) a
+    </select>
+
+</mapper>
